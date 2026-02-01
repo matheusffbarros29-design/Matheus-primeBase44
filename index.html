@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f172a">
+
+<style>
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{
+  margin:0;
+  background:#000;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  overflow:hidden;
+}
+
+/* ===== TELA KEY ===== */
+.key-screen{
+  position:fixed;
+  inset:0;
+  background:radial-gradient(circle at top,#18000d,#000);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:10;
+}
+
+.key-box{
+  width:340px;
+  background:#070707;
+  border-radius:18px;
+  padding:20px;
+  border:1px solid #ff0077;
+  box-shadow:0 0 35px #ff0077,inset 0 0 20px rgba(255,0,119,.25);
+  text-align:center;
+  animation:pulse 2s infinite;
+}
+
+@keyframes pulse{
+  0%,100%{box-shadow:0 0 25px #ff0077}
+  50%{box-shadow:0 0 45px #ff0077}
+}
+
+.key-title{
+  color:#ff0077;
+  font-size:22px;
+  font-weight:bold;
+  margin-bottom:6px;
+}
+.key-sub{
+  color:#fff;
+  font-size:13px;
+  margin-bottom:14px;
+  opacity:.85;
+}
+
+.key-input{
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid #ff0077;
+  background:#000;
+  color:#ff0077;
+  outline:none;
+  font-size:14px;
+  text-align:center;
+  box-shadow:inset 0 0 10px rgba(255,0,119,.3);
+}
+
+.key-btn{
+  margin-top:14px;
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:12px;
+  background:#ff0077;
+  color:#000;
+  font-weight:bold;
+  cursor:pointer;
+  box-shadow:0 0 20px #ff0077;
+}
+
+.key-error{
+  margin-top:10px;
+  color:#ff4d8d;
+  font-size:13px;
+  display:none;
+}
+
+/* ===== PAINEL ===== */
+.panel{
+  width:360px;
+  height:290px;
+  background:#070707;
+  border-radius:16px;
+  border:1px solid #ff0077;
+  box-shadow:0 0 25px #ff0077,inset 0 0 20px rgba(255,0,119,.25);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  opacity:0;
+  transform:scale(.9);
+  transition:.5s;
+}
+.panel.show{
+  opacity:1;
+  transform:scale(1);
+}
+
+/* HEADER */
+.header{
+  height:46px;
+  background:linear-gradient(180deg,#2a0018,#12000a);
+  color:#ff0077;
+  display:flex;
+  align-items:center;
+  padding:0 12px;
+  font-weight:bold;
+}
+.header span{margin-left:8px}
+
+/* BODY */
+.body{flex:1;display:flex}
+
+/* SIDEBAR */
+.sidebar{
+  width:56px;
+  background:#050505;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding-top:10px;
+  gap:14px;
+}
+.icon{
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  background:#0e0e0e;
+  border:1px solid #333;
+  color:#ff0077;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  cursor:pointer;
+}
+.icon.active{
+  background:#ff0077;
+  color:#000;
+  box-shadow:0 0 12px #ff0077;
+}
+
+/* CONTENT */
+.content{flex:1;padding:12px}
+.tab{display:none}
+.tab.active{display:block}
+
+/* CARD */
+.card{
+  background:#0b0b0b;
+  border-radius:12px;
+  padding:12px;
+  margin-bottom:8px;
+  box-shadow:inset 0 0 10px rgba(255,0,119,.15);
+}
+
+/* TOGGLE */
+.toggle{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  color:#fff;
+  font-size:14px;
+  margin-bottom:8px;
+}
+.switch{position:relative;width:42px;height:22px}
+.switch input{display:none}
+.slider{
+  position:absolute;
+  inset:0;
+  background:#222;
+  border-radius:20px;
+  cursor:pointer;
+}
+.slider::before{
+  content:"";
+  position:absolute;
+  width:18px;
+  height:18px;
+  left:2px;
+  top:2px;
+  background:#fff;
+  border-radius:50%;
+  transition:.2s;
+}
+.switch input:checked + .slider{background:#ff0077}
+.switch input:checked + .slider::before{transform:translateX(20px)}
+
+/* FOV */
+.fov{color:#fff;font-size:13px}
+.fov span{float:right;color:#ff0077}
+input[type=range]{width:100%;margin-top:6px;accent-color:#ff0077}
+
+/* INJECT */
+.inject{
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:10px;
+  background:#ff0077;
+  color:#000;
+  font-weight:bold;
+  cursor:pointer;
+  box-shadow:0 0 15px #ff0077;
+  margin-bottom:6px;
+}
+
+/* LOG */
+.log{
+  height:70px;
+  overflow:auto;
+  font-size:12px;
+  color:#ff0077;
+  background:#050505;
+  border-radius:8px;
+  padding:6px;
+  font-family:monospace;
+}
+.cursor{
+  display:inline-block;
+  width:8px;
+  animation:blink 1s infinite;
+}
+@keyframes blink{
+  0%,50%,100%{opacity:1}
+  25%,75%{opacity:0}
+}
+</style>
+</head>
+
+<body>
+
+<!-- TELA DE KEY -->
+<div class="key-screen" id="keyScreen">
+  <div class="key-box">
+    <div class="key-title">🔐 ACESSO RESTRITO</div>
+    <div class="key-sub">Insira a Key para liberar o auxílio</div>
+    <input class="key-input" id="keyInput" placeholder="Digite sua Key">
+    <button class="key-btn" onclick="checkKey()">ACESSAR</button>
+    <div class="key-error" id="keyError">❌ Key inválida</div>
+  </div>
+</div>
+
+<!-- PAINEL -->
+<div class="panel" id="panel">
+
+  <div class="header">
+    <span id="headerIcon">🎯</span>
+    <span id="headerTitle">AIMBOT</span>
+  </div>
+
+  <div class="body">
+    <div class="sidebar">
+      <div class="icon active" onclick="openTab(0)">🎯</div>
+      <div class="icon" onclick="openTab(1)">🔻</div>
+      <div class="icon" onclick="openTab(2)">⚡</div>
+      <div class="icon" onclick="openTab(3)">🛡</div>
+      <div class="icon" onclick="openTab(4)">💉</div>
+    </div>
+
+    <div class="content">
+
+      <div class="tab active">
+        <div class="card">
+          <div class="toggle">Aimbot<label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+          <div class="toggle">Aim Lock<label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+          <div class="toggle">Ignorar Derrubados<label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+        </div>
+        <div class="card fov">
+          FOV <span id="fovValue">20</span>
+          <input type="range" min="0" max="360" value="20"
+          oninput="document.getElementById('fovValue').innerText=this.value">
+        </div>
+      </div>
+
+      <div class="tab">
+        <div class="card">
+          <div class="toggle">No Recoil<label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+          <div class="toggle">Aumentar Precisão<label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+        </div>
+      </div>
+
+      <div class="tab">
+        <div class="card">
+          <div class="toggle">High Performance<label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+          <div class="toggle">FPS Boost<label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+          <div class="toggle">120 FPS<label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+        </div>
+      </div>
+
+      <div class="tab">
+        <div class="card">
+          <div class="toggle">Bypass<label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+          <div class="toggle">Security 100%<label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+        </div>
+      </div>
+
+      <div class="tab">
+        <button class="inject" onclick="injetar('ff')">INJETAR FF</button>
+        <button class="inject" onclick="injetar('ffmax')">INJETAR FF MAX</button>
+        <div class="log" id="log"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY_CORRETA = "MatheusFFX-key-283jwJW92";
+
+function checkKey(){
+  const input = document.getElementById("keyInput").value;
+  const error = document.getElementById("keyError");
+  if(input === KEY_CORRETA){
+    document.getElementById("keyScreen").style.display="none";
+    document.getElementById("panel").classList.add("show");
+  }else{
+    error.style.display="block";
+  }
+}
+
+const titles=["AIMBOT","PRECISÃO","PERFORMANCE","SECURITY","INJETAR"];
+const icons=["🎯","🔻","⚡","🛡","💉"];
+
+function openTab(i){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.icon').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab')[i].classList.add('active');
+  document.querySelectorAll('.icon')[i].classList.add('active');
+  headerTitle.innerText=titles[i];
+  headerIcon.innerText=icons[i];
+}
+
+/* ===== ABERTURA REAL DO APP ===== */
+function abrirApp(pkg){
+  const iframe = document.createElement("iframe");
+  iframe.style.display="none";
+  iframe.src =
+    "intent://launch#Intent;" +
+    "scheme=freefire;" +
+    "package=" + pkg + ";" +
+    "end";
+  document.body.appendChild(iframe);
+  setTimeout(()=>document.body.removeChild(iframe),2000);
+}
+
+function injetar(tipo){
+  const log=document.getElementById("log");
+  log.innerHTML="";
+  const linhas=[
+    "[+] Inicializando módulo...",
+    "[+] Sincronizando memória...",
+    "[+] Aplicando configurações...",
+    "[+] Verificando segurança...",
+    "[+] Injeção em andamento..."
+  ];
+  let i=0;
+  const intervalo=setInterval(()=>{
+    if(i<linhas.length){
+      log.innerHTML+=linhas[i]+"<br>";
+      log.scrollTop=log.scrollHeight;
+      i++;
+    }else{
+      clearInterval(intervalo);
+      log.innerHTML+="[✓] Concluído<span class='cursor'>_</span>";
+      // ABRE O APP DEPOIS DE CONCLUIR
+      setTimeout(()=>{
+        if(tipo==="ff") abrirApp("com.dts.freefireth");
+        if(tipo==="ffmax") abrirApp("com.dts.freefiremax");
+      },500);
+    }
+  },700);
+}
+
+  // >>Integrate
+  // Free Fire
+  // define.touch.precision_com.dts.freefireth. FFMainActivity
+  // define.touch.velocity_com.dts.freefireth. FFMainActivity
+  // Free Fire Max
+  // define.touch.precision_com.dts.freefiremax.FFMainActivity
+  // define.touch.velocity_com.dts.freefiremax. FFMainActivity
+  // Value (COPY EVERYTHING BELOW AND PASTE IT INTO BOTH)
+
+  // ===============================
+  // MODOS DE JOGO
+  // ===============================
+  const GAME_MODE = {
+    TRAINING: "training",
+    CASUAL: "casual",
+    X1: "x1",
+    RANKED: "ranked"
+  };
+
+  let currentMode = GAME_MODE.X1;
+
+  // ===============================
+  // AIM ASSIST MOBILE FF
+  // ===============================
+  let fireTime = 0;
+
+  function getAimAssistSettings() {
+    switch (currentMode) {
+      case GAME_MODE.TRAINING:
+        return { enabled: true, strengthMultiplier: 1.5 };
+      case GAME_MODE.CASUAL:
+        return { enabled: true, strengthMultiplier: 1.5 };
+      case GAME_MODE.X1:
+        return { enabled: true, strengthMultiplier: 1.5 };
+      case GAME_MODE.RANKED:
+      default:
+        return { enabled: false, strengthMultiplier: 0 };
+    }
+  }
+
+  function applyAimAssistMobileFF(config) {
+    let {
+      aimX,
+      aimY,
+      aimAngle,
+      enemies,
+      isFiring,
+      deltaTime,
+
+      // 🔥 PERFIL 2 (ACIMA DO LIMITE SEGURO)
+      radius = 150,
+      maxAngle = 0.45,
+      baseStrength = 0.100,
+      headOffset = 15
+    } = config;
+
+    const mode = getAimAssistSettings();
+    if (!mode.enabled) return aimAngle;
+
+    // Só funciona enquanto atira
+    if (isFiring) {
+      fireTime += deltaTime;
+    } else {
+      fireTime = 0;
+      return aimAngle;
+    }
+
+    // Rampa curta no início do tiro (efeito FF)
+    const ramp = Math.min(fireTime / 0.12, 1);
+
+    let bestTargetAngle = null;
+    let bestScore = Infinity;
+
+    for (let i = 0; i < enemies.length; i++) {
+      const e = enemies[i];
+
+      // Posição da cabeça
+      const hx = e.x;
+      const hy = e.y - (e.headOffset || headOffset);
+
+      const dx = hx - aimX;
+      const dy = hy - aimY;
+      const dist = Math.hypot(dx, dy);
+      if (dist > radius) continue;
+
+      const targetAngle = Math.atan2(dy, dx);
+
+      let diff = Math.atan2(
+        Math.sin(targetAngle - aimAngle),
+        Math.cos(targetAngle - aimAngle)
+      );
+      diff = Math.abs(diff);
+      if (diff > maxAngle) continue;
+
+      // Score prioriza cabeça + centro da mira
+      const score = diff + (dist / radius);
+
+      if (score < bestScore) {
+        bestScore = score;
+        bestTargetAngle = targetAngle;
+      }
+    }
+
+    if (bestTargetAngle !== null) {
+      // 🔥 AUXÍLIO CONTÍNUO EM TODOS OS TIROS
+      const strength =
+        baseStrength *
+        mode.strengthMultiplier *
+        ramp *
+        (1 - Math.min(bestScore, 1));
+
+      aimAngle += (bestTargetAngle - aimAngle) * strength;
+    }
+
+    return aimAngle;
+  }
+
+  // ===============================
+  // NO RECOIL
+  // ===============================
+  function getNoRecoilSettings() {
+    switch (currentMode) {
+      case GAME_MODE.TRAINING:
+        return { enabled: true, multiplier: 1.05 };
+      case GAME_MODE.CASUAL:
+        return { enabled: true, multiplier: 1.0 };
+      case GAME_MODE.X1:
+        return { enabled: true, multiplier: 0.9 };
+      case GAME_MODE.RANKED:
+      default:
+        return { enabled: false, multiplier: 0 };
+    }
+  }
+
+  // PERFIL 2 — FORTE
+  const NO_RECOIL_PROFILE_2 = {
+    baseCompensation: 0.045, // 🔥 forte (não passe disso)
+    rampTime: 0.10          // resposta rápida
+  };
+
+  let recoilTimer = 0;
+
+  function applyNoRecoil({
+    aimAngle,
+    isFiring,
+    deltaTime
+  }) {
+    const mode = getNoRecoilSettings();
+    if (!mode.enabled) return aimAngle;
+
+    if (isFiring) {
+      recoilTimer += deltaTime;
+    } else {
+      recoilTimer = 0;
+      return aimAngle;
+    }
+
+    // rampa progressiva (evita tranco)
+    const ramp = Math.min(recoilTimer / NO_RECOIL_PROFILE_2.rampTime, 1);
+
+    // compensação final
+    const compensation =
+      NO_RECOIL_PROFILE_2.baseCompensation *
+      ramp *
+      mode.multiplier;
+
+    // aplica compensação (remove subida da mira)
+    aimAngle -= compensation;
+
+    return aimAngle;
+  }
+
+  // ===============================
+  // FOV DINÂMICO
+  // ===============================
+  function getFovSettings() {
+    switch (currentMode) {
+      case GAME_MODE.TRAINING:
+        return { enabled: true, multiplier: 1.1 };
+      case GAME_MODE.CASUAL:
+        return { enabled: true, multiplier: 1.0 };
+      case GAME_MODE.X1:
+        return { enabled: true, multiplier: 0.9 };
+      case GAME_MODE.RANKED:
+      default:
+        return { enabled: false, multiplier: 0 };
+    }
+  }
+
+  // PERFIL 2 — FOV LIVRE
+  const FOV_PROFILE_2 = {
+    minFov: 0,
+    baseFov: 22,
+    firingBonus: 35,
+    maxFov: 360
+  };
+
+  function getDynamicFov({
+    isFiring
+  }) {
+    const mode = getFovSettings();
+    if (!mode.enabled) return FOV_PROFILE_2.minFov;
+
+    let fov = FOV_PROFILE_2.baseFov;
+
+    // bônus somente enquanto atira
+    if (isFiring) {
+      fov += FOV_PROFILE_2.firingBonus;
+    }
+
+    // multiplicador por modo
+    fov *= mode.multiplier;
+
+    // clamp 0 → 360
+    fov = Math.max(FOV_PROFILE_2.minFov,
+      Math.min(fov, FOV_PROFILE_2.maxFov));
+
+    return fov;
+  }
+
+  // ===============================
+  // AIM LOCK — SISTEMA UNIFICADO
+  // ===============================
+
+  // CONFIGURAÇÃO GERAL
+  const AIM_LOCK = {
+    enabled: true,
+
+    // perfil FORTE (um pouco acima do seguro)
+    lockStrength: 0.20,     // força do lock
+    maxSnapAngle: 0.6,      // limite por frame
+    headOffset: 14,         // ajuste para cabeça
+    maxDistance: 999999     // qualquer distância
+  };
+
+  // MULTIPLICADOR POR MODO
+  function getModeMultiplier() {
+    switch (currentMode) {
+      case GAME_MODE.TRAINING: return 1.1;
+      case GAME_MODE.CASUAL:   return 1.0;
+      case GAME_MODE.X1:       return 0.9;
+      case GAME_MODE.RANKED:   return 0.0; // desliga
+      default: return 1.0;
+    }
+  }
+
+  // FUNÇÕES MATEMÁTICAS
+  function clamp(v, min, max) {
+    return Math.max(min, Math.min(v, max));
+  }
+
+  function normalizeAngle(a) {
+    while (a > Math.PI) a -= Math.PI * 2;
+    while (a < -Math.PI) a += Math.PI * 2;
+    return a;
+  }
+
+  function lerpAngle(a, b, t) {
+    const diff = normalizeAngle(b - a);
+    return a + diff * t;
+  }
+
+  function getAngle(fromX, fromY, toX, toY) {
+    return Math.atan2(toY - fromY, toX - fromX);
+  }
+
+  // ESCOLHA DO MELHOR ALVO
+  function findTarget(player, enemies, aimAngle, fov) {
+    let bestAngle = null;
+    let bestDiff = fov;
+
+    for (let e of enemies) {
+      if (!e.alive) continue;
+
+      const dy = e.y - AIM_LOCK.headOffset;
+      const angleToEnemy = getAngle(
+        player.x, player.y,
+        e.x, dy
+      );
+
+      const diff = Math.abs(
+        normalizeAngle(angleToEnemy - aimAngle)
+      );
+
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestAngle = angleToEnemy;
+      }
+    }
+
+    return bestAngle;
+  }
+
+  // FUNÇÃO PRINCIPAL
+  function applyAimLock({
+    player,
+    enemies,
+    aimAngle,
+    isFiring,
+    deltaTime,
+    fov
+  }) {
+    if (!AIM_LOCK.enabled) return aimAngle;
+    if (!isFiring) return aimAngle;
+
+    const modeMultiplier = getModeMultiplier();
+    if (modeMultiplier === 0) return aimAngle;
+
+    const targetAngle = findTarget(
+      player,
+      enemies,
+      aimAngle,
+      fov
+    );
+
+    if (targetAngle === null) return aimAngle;
+
+    // força final (ajustada por FPS e modo)
+    const strength =
+      AIM_LOCK.lockStrength *
+      modeMultiplier *
+      Math.min(deltaTime * 60, 1);
+
+    // interpolação suave
+    let newAim = lerpAngle(
+      aimAngle,
+      targetAngle,
+      strength
+    );
+
+    // trava correção máxima por frame
+    const diff = normalizeAngle(newAim - aimAngle);
+    const clamped = clamp(
+      diff,
+      -AIM_LOCK.maxSnapAngle,
+      AIM_LOCK.maxSnapAngle
+    );
+
+    return aimAngle + clamped;
+  }
+
+  // ===============================
+  // EXEMPLO DE USO NO LOOP DO JOGO
+  // ===============================
+  function gameUpdate(deltaTime) {
+    // exemplo de variáveis do jogo
+    let aimAngle = player.aimAngle;
+    const isFiring = player.isShooting;
+
+    // aplica no recoil
+    aimAngle = applyNoRecoil({
+      aimAngle: aimAngle,
+      isFiring: isFiring,
+      deltaTime: deltaTime
+    });
+
+    // FOV pode ser fixo ou dinâmico
+    const fov = getDynamicFov({
+      isFiring: isFiring
+    });
+
+    // aplica aim lock
+    aimAngle = applyAimLock({
+      player: player,
+      enemies: enemies,
+      aimAngle: aimAngle,
+      isFiring: isFiring,
+      deltaTime: deltaTime,
+      fov: fov
+    });
+
+    // atualiza a mira final
+    player.aimAngle = aimAngle;
+  }
+</script>
+
+</body>
+</html>
