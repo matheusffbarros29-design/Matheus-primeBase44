@@ -241,10 +241,42 @@ input[type=range]{width:100%;margin-top:6px;accent-color:#ff0077}
   0%,50%,100%{opacity:1}
   25%,75%{opacity:0}
 }
+
+/* ===== FLOCOS DE NEVE ===== */
+.snow{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+}
+.snow span{
+  position:absolute;
+  top:-50px;
+  color:#fff;
+  opacity:0.7;
+  animation:neve linear infinite;
+}
+@keyframes neve{
+  to{transform:translateY(120vh)}
+}
 </style>
 </head>
 
 <body>
+
+<!-- ❄️ NEVE NO FUNDO -->
+<div class="snow">
+  <span style="left:5%;font-size:32px;animation-duration:16s">❄</span>
+  <span style="left:15%;font-size:26px;animation-duration:13s">❄</span>
+  <span style="left:25%;font-size:36px;animation-duration:18s">❄</span>
+  <span style="left:35%;font-size:28px;animation-duration:14s">❄</span>
+  <span style="left:45%;font-size:40px;animation-duration:20s">❄</span>
+  <span style="left:55%;font-size:30px;animation-duration:15s">❄</span>
+  <span style="left:65%;font-size:34px;animation-duration:17s">❄</span>
+  <span style="left:75%;font-size:26px;animation-duration:12s">❄</span>
+  <span style="left:85%;font-size:38px;animation-duration:19s">❄</span>
+  <span style="left:95%;font-size:28px;animation-duration:14s">❄</span>
+</div>
 
 <!-- TELA DE KEY -->
 <div class="key-screen" id="keyScreen">
@@ -283,8 +315,8 @@ input[type=range]{width:100%;margin-top:6px;accent-color:#ff0077}
           <div class="toggle">Ignorar Derrubados<label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
         </div>
         <div class="card fov">
-          FOV <span id="fovValue">20</span>
-          <input type="range" min="0" max="360" value="20"
+          FOV <span id="fovValue">90</span>
+          <input type="range" min="0" max="360" value="90"
           oninput="document.getElementById('fovValue').innerText=this.value">
         </div>
       </div>
@@ -410,6 +442,60 @@ function injetar(tipo){
   let currentMode = GAME_MODE.X1;
 
   // ===============================
+  // CONFIGURAÇÃO DO AIM ASSIST PYTHON PORTADO
+  // ===============================
+  const PYTHON_AIM_CONFIG = {
+    AIM_STRENGTH: 0.30,
+    SMOOTH: 0.92,
+    HEAD_OFFSET: 0.14,
+    FIRE_ONLY: true
+  };
+
+  // ===============================
+  // CLASSE PLAYER (PORTADO DO PYTHON)
+  // ===============================
+  class Player {
+    constructor() {
+      this.view_angle = 0.0;
+      this.is_firing = false;
+      this.x = 0;
+      this.y = 0;
+      this.aimAngle = 0;
+      this.isShooting = false;
+    }
+  }
+
+  // ===============================
+  // FUNÇÕES DE NORMALIZAÇÃO
+  // ===============================
+  function normalize(angle) {
+    while (angle > Math.PI) {
+      angle -= 2 * Math.PI;
+    }
+    while (angle < -Math.PI) {
+      angle += 2 * Math.PI;
+    }
+    return angle;
+  }
+
+  // ===============================
+  // AIM ASSIST ATIVO NO TIRO (PORTADO DO PYTHON)
+  // ===============================
+  function aimAssistOnFire(player, recoil_angle) {
+    if (PYTHON_AIM_CONFIG.FIRE_ONLY && !player.is_firing) {
+      return;
+    }
+
+    // compensação + leve subida pra cabeça
+    let correction = (-recoil_angle + PYTHON_AIM_CONFIG.HEAD_OFFSET);
+
+    // suavização
+    correction *= PYTHON_AIM_CONFIG.AIM_STRENGTH * (1 - PYTHON_AIM_CONFIG.SMOOTH);
+
+    player.view_angle = normalize(player.view_angle + correction);
+  }
+
+  // ===============================
   // AIM ASSIST MOBILE FF
   // ===============================
   let fireTime = 0;
@@ -417,14 +503,13 @@ function injetar(tipo){
   function getAimAssistSettings() {
     switch (currentMode) {
       case GAME_MODE.TRAINING:
-        return { enabled: true, strengthMultiplier: 1.5 };
+        return { enabled: true, strengthMultiplier: 0.9 };
       case GAME_MODE.CASUAL:
-        return { enabled: true, strengthMultiplier: 1.5 };
+        return { enabled: true, strengthMultiplier: 0.9 };
       case GAME_MODE.X1:
-        return { enabled: true, strengthMultiplier: 1.5 };
+        return { enabled: true, strengthMultiplier: 0.9 };
       case GAME_MODE.RANKED:
-      default:
-        return { enabled: false, strengthMultiplier: 0 };
+        return { enabled: true, multiplier: 0.9 };
     }
   }
 
@@ -439,9 +524,9 @@ function injetar(tipo){
 
       // 🔥 PERFIL 2 (ACIMA DO LIMITE SEGURO)
       radius = 150,
-      maxAngle = 0.45,
-      baseStrength = 0.100,
-      headOffset = 15
+      maxAngle = 0.65,
+      baseStrength = 0.250,
+      headOffset = 30
     } = config;
 
     const mode = getAimAssistSettings();
@@ -511,21 +596,20 @@ function injetar(tipo){
   function getNoRecoilSettings() {
     switch (currentMode) {
       case GAME_MODE.TRAINING:
-        return { enabled: true, multiplier: 1.05 };
+        return { enabled: true, multiplier: 0.9 };
       case GAME_MODE.CASUAL:
-        return { enabled: true, multiplier: 1.0 };
+        return { enabled: true, multiplier: 0.9 };
       case GAME_MODE.X1:
         return { enabled: true, multiplier: 0.9 };
       case GAME_MODE.RANKED:
-      default:
-        return { enabled: false, multiplier: 0 };
+        return { enabled: true, multiplier: 0.9 };
     }
   }
 
   // PERFIL 2 — FORTE
   const NO_RECOIL_PROFILE_2 = {
-    baseCompensation: 0.045, // 🔥 forte (não passe disso)
-    rampTime: 0.10          // resposta rápida
+    baseCompensation: 0.092, // 🔥 forte (não passe disso)
+    rampTime: 0.15          // resposta rápida
   };
 
   let recoilTimer = 0;
@@ -566,22 +650,21 @@ function injetar(tipo){
   function getFovSettings() {
     switch (currentMode) {
       case GAME_MODE.TRAINING:
-        return { enabled: true, multiplier: 1.1 };
+        return { enabled: true, multiplier: 0.9 };
       case GAME_MODE.CASUAL:
-        return { enabled: true, multiplier: 1.0 };
+        return { enabled: true, multiplier: 0.9 };
       case GAME_MODE.X1:
         return { enabled: true, multiplier: 0.9 };
       case GAME_MODE.RANKED:
-      default:
-        return { enabled: false, multiplier: 0 };
+        return { enabled: true, multiplier: 0.9 };
     }
   }
 
   // PERFIL 2 — FOV LIVRE
   const FOV_PROFILE_2 = {
     minFov: 0,
-    baseFov: 22,
-    firingBonus: 35,
+    baseFov: 42,
+    firingBonus: 65,
     maxFov: 360
   };
 
@@ -619,18 +702,17 @@ function injetar(tipo){
     // perfil FORTE (um pouco acima do seguro)
     lockStrength: 0.20,     // força do lock
     maxSnapAngle: 0.6,      // limite por frame
-    headOffset: 14,         // ajuste para cabeça
+    headOffset: 18,         // ajuste para cabeça
     maxDistance: 999999     // qualquer distância
   };
 
   // MULTIPLICADOR POR MODO
   function getModeMultiplier() {
     switch (currentMode) {
-      case GAME_MODE.TRAINING: return 1.1;
-      case GAME_MODE.CASUAL:   return 1.0;
-      case GAME_MODE.X1:       return 0.9;
-      case GAME_MODE.RANKED:   return 0.0; // desliga
-      default: return 1.0;
+      case GAME_MODE.TRAINING: return 1.5;
+      case GAME_MODE.CASUAL:   return 1.5;
+      case GAME_MODE.X1:       return 1.5;
+      case GAME_MODE.RANKED:      return 1.5;
     }
   }
 
@@ -732,10 +814,15 @@ function injetar(tipo){
   // ===============================
   // EXEMPLO DE USO NO LOOP DO JOGO
   // ===============================
-  function gameUpdate(deltaTime) {
+  function gameUpdate(deltaTime, player, enemies) {
     // exemplo de variáveis do jogo
     let aimAngle = player.aimAngle;
     const isFiring = player.isShooting;
+
+    // aplica aim assist do Python portado
+    const recoil = 0.2; // simulação de recoil
+    player.is_firing = isFiring;
+    aimAssistOnFire(player, recoil);
 
     // aplica no recoil
     aimAngle = applyNoRecoil({
